@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>LineBreaker Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #0d0d14; color: #fff; font-family: -apple-system, sans-serif; padding: 16px; padding-bottom: 100px; }
+.header { text-align: center; padding: 16px 0 20px; border-bottom: 2px solid #FFD700; margin-bottom: 20px; }
+.logo { font-size: 24px; font-weight: 900; color: #FFD700; letter-spacing: 2px; }
+.sub { font-size: 12px; color: #666; margin-top: 4px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.tab { flex: 1; padding: 10px; background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; color: #666; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
+.tab.active { background: #FFD700; color: #000; border-color: #FFD700; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: #16161f; border: 1px solid #2a2a3a; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.lbl { font-size: 11px; font-weight: 700; color: #FFD700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+.row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.row-label { font-size: 14px; color: #aaa; }
+.row-value { font-size: 16px; font-weight: 700; color: #fff; }
+input[type=number] { background: #1e1e2e; border: 1px solid #3a3a4a; border-radius: 10px; color: #fff; font-size: 18px; padding: 10px 14px; width: 130px; text-align: right; -webkit-appearance: none; }
+input[type=number]:focus { outline: none; border-color: #FFD700; }
+.level-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+.level-btn { flex: 1; padding: 10px 6px; background: #1e1e2e; border: 1.5px solid #2a2a3a; border-radius: 10px; color: #666; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
+.level-btn.sel { border-color: #FFD700; color: #FFD700; background: #1e1e14; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat { background: #16161f; border: 1px solid #2a2a3a; border-radius: 12px; padding: 14px; text-align: center; }
+.stat-val { font-size: 22px; font-weight: 900; }
+.stat-lbl { font-size: 10px; color: #555; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
+.gold { color: #FFD700; } .green { color: #00d4aa; } .red { color: #ff4757; }
+.guide-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #1e1e2e; }
+.guide-row:last-child { border-bottom: none; }
+.badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; }
+.elite { background: #FFD700; color: #000; }
+.strong { background: #1a4a35; color: #00d4aa; }
+.value { background: #1a1a4e; color: #6699ff; }
+.multi-badge { background: #3a1a3a; color: #ff88ff; }
+.pick-card { background: #16161f; border: 1px solid #2a2a3a; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.pick-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.pick-name { font-size: 15px; font-weight: 700; max-width: 65%; }
+.pick-meta { font-size: 11px; color: #555; margin-top: 3px; }
+.pick-stake { font-size: 20px; font-weight: 900; color: #FFD700; text-align: right; }
+.pick-units-lbl { font-size: 11px; color: #555; text-align: right; }
+.btns { display: flex; gap: 8px; }
+.rbtn { flex: 1; padding: 11px 6px; border: 1.5px solid; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; -webkit-appearance: none; }
+.rbtn-win { border-color: #00d4aa; color: #00d4aa; }
+.rbtn-win.sel { background: #00d4aa; color: #000; }
+.rbtn-loss { border-color: #ff4757; color: #ff4757; }
+.rbtn-loss.sel { background: #ff4757; color: #fff; }
+.rbtn-push { border-color: #444; color: #666; }
+.rbtn-push.sel { background: #333; color: #fff; }
+.add-btn { width: 100%; padding: 16px; background: transparent; border: 2px dashed #2a2a3a; border-radius: 14px; color: #444; font-size: 15px; cursor: pointer; margin-bottom: 14px; }
+.del-btn { font-size: 11px; color: #444; cursor: pointer; padding: 4px 8px; background: #1e1e2e; border: none; border-radius: 6px; margin-top: 8px; float: right; }
+.clear-btn { width: 100%; padding: 12px; background: #1e1e2e; border: 1px solid #2a2a3a; border-radius: 10px; color: #555; font-size: 13px; cursor: pointer; margin-top: 4px; }
+.bottom { position: fixed; bottom: 0; left: 0; right: 0; background: #0d0d14; border-top: 1px solid #2a2a3a; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.bottom-lbl { font-size: 11px; color: #555; margin-bottom: 2px; }
+.bottom-val { font-size: 20px; font-weight: 900; }
+.empty { text-align: center; color: #333; font-size: 13px; padding: 20px; }
+.pl-month { background: #16161f; border: 1px solid #2a2a3a; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.pl-month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.pl-month-name { font-size: 15px; font-weight: 700; }
+.pl-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.pl-stat { text-align: center; }
+.pl-stat-val { font-size: 16px; font-weight: 700; color: #FFD700; }
+.pl-stat-lbl { font-size: 10px; color: #555; margin-top: 2px; }
+.save-month-btn { width: 100%; padding: 14px; background: #FFD700; border: none; border-radius: 12px; color: #000; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; }
+.overlay.open { display: flex; align-items: flex-end; }
+.modal { background: #16161f; border-top: 2px solid #FFD700; border-radius: 20px 20px 0 0; padding: 24px 16px 40px; width: 100%; }
+.modal-title { font-size: 17px; font-weight: 700; color: #FFD700; margin-bottom: 20px; }
+.modal input, .modal select { width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; border-radius: 10px; color: #fff; font-size: 16px; padding: 14px; margin-bottom: 12px; -webkit-appearance: none; display: block; }
+.modal select option { background: #1e1e2e; }
+.modal-confirm { width: 100%; padding: 16px; background: #FFD700; border: none; border-radius: 12px; color: #000; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+.modal-cancel { width: 100%; padding: 14px; background: #1e1e2e; border: none; border-radius: 12px; color: #555; font-size: 15px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚡ LINEBREAKER</div>
+  <div class="sub">Premium Bankroll Tracker & P&L</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tracker')">📊 Tracker</div>
+  <div class="tab" onclick="switchTab('guide')">📖 Guide</div>
+  <div class="tab" onclick="switchTab('pl')">📈 P&L</div>
+</div>
+
+<!-- TRACKER -->
+<div class="section active" id="tab-tracker">
+  <div class="card">
+    <div class="lbl">My Bankroll & Level</div>
+    <div class="row">
+      <span class="row-label">Bankroll ($)</span>
+      <input type="number" id="bankroll" value="500" min="10" onchange="updateAll()">
+    </div>
+    <div class="lbl" style="margin-top:8px;margin-bottom:8px;">Risk Level</div>
+    <div class="level-btns">
+      <div class="level-btn" id="lvl-conservative" onclick="setLevel('conservative')">🟢 Conservative<br><span style="font-size:10px;font-weight:400;">2% per unit</span></div>
+      <div class="level-btn sel" id="lvl-standard" onclick="setLevel('standard')">🟡 Standard<br><span style="font-size:10px;font-weight:400;">5% per unit</span></div>
+      <div class="level-btn" id="lvl-aggressive" onclick="setLevel('aggressive')">🔴 Aggressive<br><span style="font-size:10px;font-weight:400;">8% per unit</span></div>
+    </div>
+    <div class="row" style="margin-bottom:0;">
+      <span class="row-label">1 unit =</span>
+      <span class="row-value gold" id="unitVal">$25.00</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val gold" id="plVal">$0.00</div><div class="stat-lbl">Total P&L</div></div>
+    <div class="stat"><div class="stat-val" id="bankVal">$500.00</div><div class="stat-lbl">Current Bank</div></div>
+    <div class="stat"><div class="stat-val" id="wrVal">—</div><div class="stat-lbl">Win Rate</div></div>
+    <div class="stat"><div class="stat-val" id="unitTot">0.0u</div><div class="stat-lbl">Units</div></div>
+  </div>
+
+  <div class="lbl" style="margin-bottom:12px;">This Round</div>
+  <div id="picksList"></div>
+  <button class="add-btn" onclick="openModal()">+ Add Pick</button>
+  <button class="clear-btn" onclick="clearRound()">Clear picks (start new round)</button>
+</div>
+
+<!-- GUIDE -->
+<div class="section" id="tab-guide">
+  <div class="card">
+    <div class="lbl">How Much to Bet</div>
+    <div class="guide-row"><span class="badge elite">ELITE</span><span style="font-size:13px;color:#aaa;">2 units</span><span style="font-size:16px;font-weight:700;" id="eliteAmt">$50.00</span></div>
+    <div class="guide-row"><span class="badge strong">STRONG</span><span style="font-size:13px;color:#aaa;">1.5 units</span><span style="font-size:16px;font-weight:700;" id="strongAmt">$37.50</span></div>
+    <div class="guide-row"><span class="badge value">VALUE</span><span style="font-size:13px;color:#aaa;">0.5 units</span><span style="font-size:16px;font-weight:700;" id="valueAmt">$12.50</span></div>
+    <div class="guide-row"><span class="badge multi-badge">MULTI</span><span style="font-size:13px;color:#aaa;">0.5 units max</span><span style="font-size:16px;font-weight:700;" id="multiAmt">$12.50</span></div>
+  </div>
+  <div class="card">
+    <div class="lbl">Risk Level Explained</div>
+    <div style="font-size:13px;color:#aaa;line-height:2.0;">
+      🟢 <strong style="color:#fff;">Conservative (2%)</strong> — New to the system. Lower variance, slower growth. Recommended starting point.<br><br>
+      🟡 <strong style="color:#fff;">Standard (5%)</strong> — Experienced bettor. Good balance of action and protection.<br><br>
+      🔴 <strong style="color:#fff;">Aggressive (8%)</strong> — High risk, high reward. Only if you can handle 25% bankroll swings without panic.
+    </div>
+  </div>
+  <div class="card">
+    <div class="lbl">The Rules</div>
+    <div style="font-size:13px;color:#aaa;line-height:2.2;">
+      ✅ Max 10 units exposure per round<br>
+      ✅ Max 4 legs in any multi<br>
+      ✅ Never chase a loss<br>
+      ✅ Increase bankroll only after 50 picks + 10u profit<br>
+      ✅ Drop a level if bankroll falls 25% from peak<br>
+      ✅ Track every single bet
+    </div>
+  </div>
+</div>
+
+<!-- P&L -->
+<div class="section" id="tab-pl">
+  <div class="stats">
+    <div class="stat"><div class="stat-val green" id="pl-total-units">0.0u</div><div class="stat-lbl">Season Units</div></div>
+    <div class="stat"><div class="stat-val" id="pl-total-picks">0</div><div class="stat-lbl">Total Picks</div></div>
+    <div class="stat"><div class="stat-val" id="pl-win-rate">—</div><div class="stat-lbl">Win Rate</div></div>
+    <div class="stat"><div class="stat-val gold" id="pl-total-dollar">$0.00</div><div class="stat-lbl">Season P&L</div></div>
+  </div>
+  <button class="save-month-btn" onclick="saveMonth()">💾 Save This Month & Clear</button>
+  <div id="monthsList"></div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom">
+  <div><div class="bottom-lbl">Round Exposure</div><div class="bottom-val" id="exposure">$0.00</div></div>
+  <div style="text-align:right;"><div class="bottom-lbl">Round P&L</div><div class="bottom-val" id="roundPL">$0.00</div></div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-title">Add a Pick</div>
+    <input type="text" id="pName" placeholder="e.g. Melbourne -2.5" autocomplete="off">
+    <select id="pRating">
+      <option value="elite">⭐ ELITE — 2 units</option>
+      <option value="strong">💪 STRONG — 1.5 units</option>
+      <option value="value">💎 VALUE — 0.5 units</option>
+      <option value="multi">🔥 MULTI — 0.5 units</option>
+    </select>
+    <input type="number" id="pOdds" placeholder="Odds (e.g. 1.93)" step="0.01" min="1">
+    <button class="modal-confirm" onclick="addPick()">Add Pick</button>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var picks=[];
+var months=[];
+var level='standard';
+try{picks=JSON.parse(localStorage.getItem('lb4_picks')||'[]');}catch(e){}
+try{months=JSON.parse(localStorage.getItem('lb4_months')||'[]');}catch(e){}
+try{level=localStorage.getItem('lb4_level')||'standard';}catch(e){}
+
+function setLevel(l){
+  level=l;
+  try{localStorage.setItem('lb4_level',l);}catch(e){}
+  ['conservative','standard','aggressive'].forEach(function(x){
+    document.getElementById('lvl-'+x).classList.toggle('sel',x===l);
+  });
+  updateAll();
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(function(el,i){
+    el.classList.toggle('active',['tracker','guide','pl'][i]===t);
+  });
+  document.querySelectorAll('.section').forEach(function(el){
+    el.classList.toggle('active',el.id==='tab-'+t);
+  });
+  if(t==='pl')renderPL();
+}
+
+function bank(){return parseFloat(document.getElementById('bankroll').value)||500;}
+function unitPct(){return level==='conservative'?0.02:level==='aggressive'?0.08:0.05;}
+function unit(){return bank()*unitPct();}
+function units(r){return r==='elite'?2:r==='strong'?1.5:0.5;}
+function fmt(n){return(n<0?'-':'')+'$'+Math.abs(n).toFixed(2);}
+
+function updateAll(){
+  var u=unit();
+  document.getElementById('unitVal').textContent='$'+u.toFixed(2);
+  document.getElementById('eliteAmt').textContent='$'+(u*2).toFixed(2);
+  document.getElementById('strongAmt').textContent='$'+(u*1.5).toFixed(2);
+  document.getElementById('valueAmt').textContent='$'+(u*0.5).toFixed(2);
+  document.getElementById('multiAmt').textContent='$'+(u*0.5).toFixed(2);
+  setLevel(level);
+
+  var pl=0,wins=0,losses=0,utot=0,expo=0,rpl=0;
+  picks.forEach(function(p){
+    var stake=u*units(p.r);
+    expo+=stake;
+    var profit=p.s==='win'?stake*(p.o-1):p.s==='loss'?-stake:0;
+    if(p.s==='win'){wins++;pl+=profit;utot+=units(p.r);rpl+=profit;}
+    if(p.s==='loss'){losses++;pl+=profit;utot-=units(p.r);rpl+=profit;}
+  });
+  var tot=wins+losses;
+  document.getElementById('plVal').textContent=(pl>=0?'+':'')+fmt(Math.abs(pl));
+  document.getElementById('plVal').className='stat-val '+(pl>=0?'green':'red');
+  document.getElementById('bankVal').textContent='$'+(bank()+pl).toFixed(2);
+  document.getElementById('wrVal').textContent=tot?Math.round(wins/tot*100)+'%':'—';
+  document.getElementById('wrVal').className='stat-val '+(wins>=losses&&tot>0?'green':tot>0?'red':'gold');
+  document.getElementById('unitTot').textContent=(utot>=0?'+':'')+utot.toFixed(1)+'u';
+  document.getElementById('unitTot').className='stat-val '+(utot>=0?'green':'red');
+  document.getElementById('exposure').textContent='$'+expo.toFixed(2);
+  document.getElementById('roundPL').textContent=(rpl>=0?'+':'')+fmt(Math.abs(rpl));
+  document.getElementById('roundPL').className='bottom-val '+(rpl>=0?'green':'red');
+  render();
+}
+
+function render(){
+  var u=unit();
+  var el=document.getElementById('picksList');
+  if(!picks.length){el.innerHTML='<div class="empty">No picks yet — tap + to add</div>';return;}
+  el.innerHTML=picks.map(function(p,i){
+    var stake=(u*units(p.r)).toFixed(2);
+    var bc=p.r==='elite'?'elite':p.r==='strong'?'strong':p.r==='multi'?'multi-badge':'value';
+    var bl=p.r==='elite'?'ELITE':p.r==='strong'?'STRONG':p.r==='multi'?'MULTI':'VALUE';
+    return '<div class="pick-card">'+
+      '<div class="pick-top"><div>'+
+        '<div class="pick-name">'+p.n+'</div>'+
+        '<div class="pick-meta"><span class="badge '+bc+'" style="font-size:10px;padding:2px 8px;">'+bl+'</span> Odds: '+p.o+'</div>'+
+      '</div><div>'+
+        '<div class="pick-stake">$'+stake+'</div>'+
+        '<div class="pick-units-lbl">'+units(p.r)+'u</div>'+
+      '</div></div>'+
+      '<div class="btns">'+
+        '<button class="rbtn rbtn-win'+(p.s==='win'?' sel':'')+'" onclick="setR('+i+',\'win\')">✅ WIN</button>'+
+        '<button class="rbtn rbtn-loss'+(p.s==='loss'?' sel':'')+'" onclick="setR('+i+',\'loss\')">❌ LOSS</button>'+
+        '<button class="rbtn rbtn-push'+(p.s==='push'?' sel':'')+'" onclick="setR('+i+',\'push\')">⏳</button>'+
+      '</div>'+
+      '<button class="del-btn" onclick="del('+i+')">Remove</button>'+
+    '</div>';
+  }).join('');
+}
+
+function setR(i,s){picks[i].s=s;save();updateAll();}
+function del(i){if(confirm('Remove?')){picks.splice(i,1);save();updateAll();}}
+function clearRound(){if(confirm('Clear all picks and start a new round?')){picks=[];save();updateAll();}}
+function openModal(){document.getElementById('overlay').classList.add('open');setTimeout(function(){document.getElementById('pName').focus();},100);}
+function closeModal(){document.getElementById('overlay').classList.remove('open');document.getElementById('pName').value='';document.getElementById('pOdds').value='';}
+function addPick(){
+  var n=document.getElementById('pName').value.trim();
+  if(!n){alert('Enter a pick name');return;}
+  picks.push({n:n,r:document.getElementById('pRating').value,o:parseFloat(document.getElementById('pOdds').value)||1.90,s:'push'});
+  save();closeModal();updateAll();
+}
+function save(){try{localStorage.setItem('lb4_picks',JSON.stringify(picks));}catch(e){}}
+
+function saveMonth(){
+  if(!confirm('Save this month and clear picks?'))return;
+  var u=unit();
+  var pl=0,wins=0,losses=0,utot=0;
+  picks.forEach(function(p){
+    var stake=u*units(p.r);
+    var profit=p.s==='win'?stake*(p.o-1):p.s==='loss'?-stake:0;
+    if(p.s==='win'){wins++;pl+=profit;utot+=units(p.r);}
+    if(p.s==='loss'){losses++;pl+=profit;utot-=units(p.r);}
+  });
+  var d=new Date();
+  months.push({name:d.toLocaleString('default',{month:'long',year:'numeric'}),picks:picks.length,wins:wins,losses:losses,units:parseFloat(utot.toFixed(1)),dollars:parseFloat(pl.toFixed(2)),date:d.toISOString()});
+  try{localStorage.setItem('lb4_months',JSON.stringify(months));}catch(e){}
+  picks=[];save();updateAll();renderPL();
+}
+
+function renderPL(){
+  var totalUnits=0,totalPicks=0,totalWins=0,totalDollars=0;
+  months.forEach(function(m){totalUnits+=m.units;totalPicks+=m.picks;totalWins+=m.wins;totalDollars+=m.dollars;});
+  document.getElementById('pl-total-units').textContent=(totalUnits>=0?'+':'')+totalUnits.toFixed(1)+'u';
+  document.getElementById('pl-total-units').className='stat-val '+(totalUnits>=0?'green':'red');
+  document.getElementById('pl-total-picks').textContent=totalPicks;
+  document.getElementById('pl-win-rate').textContent=totalPicks?Math.round(totalWins/totalPicks*100)+'%':'—';
+  document.getElementById('pl-total-dollar').textContent=(totalDollars>=0?'+':'')+fmt(Math.abs(totalDollars));
+  document.getElementById('pl-total-dollar').className='stat-val '+(totalDollars>=0?'green':'red');
+  var el=document.getElementById('monthsList');
+  if(!months.length){el.innerHTML='<div class="empty">No months saved yet</div>';return;}
+  el.innerHTML=months.slice().reverse().map(function(m){
+    return '<div class="pl-month">'+
+      '<div class="pl-month-header">'+
+        '<span class="pl-month-name">'+m.name+'</span>'+
+        '<span class="'+(m.units>=0?'green':'red')+'" style="font-size:18px;font-weight:900;">'+(m.units>=0?'+':'')+m.units.toFixed(1)+'u</span>'+
+      '</div>'+
+      '<div class="pl-stats">'+
+        '<div class="pl-stat"><div class="pl-stat-val">'+m.picks+'</div><div class="pl-stat-lbl">Picks</div></div>'+
+        '<div class="pl-stat"><div class="pl-stat-val">'+(m.picks>0?Math.round(m.wins/m.picks*100):0)+'%</div><div class="pl-stat-lbl">Win Rate</div></div>'+
+        '<div class="pl-stat"><div class="pl-stat-val '+(m.dollars>=0?'green':'red')+'">'+(m.dollars>=0?'+':'')+fmt(Math.abs(m.dollars))+'</div><div class="pl-stat-lbl">P&L</div></div>'+
+      '</div></div>';
+  }).join('');
+}
+
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+setLevel(level);
+updateAll();
+</script>
+</body>
+</html>
